@@ -22,6 +22,15 @@ class LogicElement(ABC):
     def is_valid(self):
         raise NotImplementedError
 
+    def __invert__(self):
+        return UnaryFormula(UnaryConnective.NEGATION, self)
+
+    def __or__(self, other):
+        return BinaryFormula(self, BinaryConnective.DISJUNCTION, other)
+
+    def __and__(self, other):
+        return BinaryFormula(self, BinaryConnective.CONJUNCTION, other)
+
 
 class LogicExpression(LogicElement, ABC):
     def is_logical_expression(self):
@@ -55,7 +64,6 @@ class Quantifier(Enum):
 
 
 class BinaryConnective(Enum):
-
     __visit_name__ = "binary_connective"
 
     CONJUNCTION = 0
@@ -134,7 +142,6 @@ class BinaryConnective(Enum):
 
 
 class DefinedPredicate(Enum):
-
     __visit_name__ = "defined_predicate"
 
     DISTINCT = 0
@@ -158,7 +165,6 @@ class DefinedPredicate(Enum):
 
 
 class UnaryConnective(Enum):
-
     __visit_name__ = "unary_connective"
 
     NEGATION = 0
@@ -169,7 +175,6 @@ class UnaryConnective(Enum):
 
 
 class TypedVariable(LogicElement):
-
     __visit_name__ = "typed_variable"
 
     def __init__(self, name, vtype):
@@ -181,7 +186,6 @@ class TypedVariable(LogicElement):
 
 
 class TypedConstant(LogicElement):
-
     __visit_name__ = "typed_variable"
 
     def __init__(self, constant, ctype):
@@ -193,7 +197,6 @@ class TypedConstant(LogicElement):
 
 
 class TypeFormula(LogicElement):
-
     __visit_name__ = "type_formula"
 
     def __init__(self, name, type_expression):
@@ -205,16 +208,14 @@ class TypeFormula(LogicElement):
 
 
 class Conditional(LogicElement):
-
     __visit_name__ = "conditional"
 
     def __init__(
-        self,
-        if_clause: LogicElement,
-        then_clause: LogicElement,
-        else_clause: LogicElement,
+            self,
+            if_clause: LogicElement,
+            then_clause: LogicElement,
+            else_clause: LogicElement,
     ):
-
         self.if_clause = if_clause
         self.then_clause = then_clause
         self.else_clause = else_clause
@@ -228,7 +229,6 @@ class Conditional(LogicElement):
 
 
 class Variable(TermExpression):
-
     __visit_name__ = "variable"
 
     def __init__(self, symbol):
@@ -251,7 +251,6 @@ class Variable(TermExpression):
 
 
 class Constant(TermExpression):
-
     __visit_name__ = "constant"
 
     def __init__(self, symbol):
@@ -271,7 +270,6 @@ class Constant(TermExpression):
 
 
 class DistinctObject(TermExpression):
-
     __visit_name__ = "distinct_object"
 
     def __init__(self, symbol):
@@ -288,7 +286,6 @@ class DistinctObject(TermExpression):
 
 
 class DefinedConstant(Constant):
-
     __visit_name__ = "defined_constant"
 
     @property
@@ -300,7 +297,6 @@ class DefinedConstant(Constant):
 
 
 class PredefinedConstant(Enum):
-
     __visit_name__ = "predefined_constant"
 
     VERUM = 0
@@ -344,9 +340,9 @@ class UnaryFormula(LogicExpression):
 
     def is_valid(self):
         return (
-            self.formula.is_logical_expression()
-            and self.formula.is_valid()
-            and isinstance(self.connective, UnaryConnective)
+                self.formula.is_logical_expression()
+                and self.formula.is_valid()
+                and isinstance(self.connective, UnaryConnective)
         )
 
 
@@ -366,7 +362,7 @@ class QuantifiedFormula(LogicExpression):
     __visit_name__ = "quantified_formula"
 
     def __init__(
-        self, quantifier, variables: Iterable[Variable], formula: LogicExpression
+            self, quantifier, variables: Iterable[Variable], formula: LogicExpression
     ):
         self.quantifier = quantifier
         self.variables = variables
@@ -382,7 +378,8 @@ class QuantifiedFormula(LogicExpression):
     def __eq__(self, other):
         if not (type(self) is type(other) and self.quantifier == other.quantifier):
             return False
-        if not (all(v in other.variables for v in self.variables) and all(v in self.variables for v in other.variables)):
+        if not (all(v in other.variables for v in self.variables) and all(
+                v in self.variables for v in other.variables)):
             return False
         return self.formula == other.formula
 
@@ -394,19 +391,18 @@ class QuantifiedFormula(LogicExpression):
 
     def is_valid(self):
         return (
-            all(isinstance(v, Variable) and v.is_valid() for v in self.variables)
-            and self.formula.is_logical_expression()
-            and self.formula.is_valid()
-            and isinstance(self.quantifier, Quantifier)
+                all(isinstance(v, Variable) and v.is_valid() for v in self.variables)
+                and self.formula.is_logical_expression()
+                and self.formula.is_valid()
+                and isinstance(self.quantifier, Quantifier)
         )
 
 
 class BinaryFormula(LogicExpression):
-
     """
     Attributes
     ----------
-    oparator
+    operator
         A binary operator
     left
         The formula on the left side
@@ -433,22 +429,42 @@ class BinaryFormula(LogicExpression):
         if not self.operator.is_symmetric():
             return self.left == other.left and self.right == other.right
         else:
-            return (self.left == other.left and self.right == other.right) or (self.left == other.right and self.right == other.left)
-
+            return (self.left == other.left and self.right == other.right) or (
+                        self.left == other.right and self.right == other.left)
 
     def symbols(self):
         return chain(self.left.symbols(), self.right.symbols())
 
     def is_valid(self):
         return (
-            self.left.is_logical_expression()
-            and self.right.is_logical_expression()
-            and isinstance(self.operator, BinaryConnective)
+                self.left.is_logical_expression()
+                and self.right.is_logical_expression()
+                and isinstance(self.operator, BinaryConnective)
         )
 
 
-class FunctorExpression(TermExpression):
+class NaryFormula(LogicExpression):
+    """Shortcut for a chain of binary formulas with the same, associative operator"""
+    __visit_name__ = "nary_formula"
 
+    def __init__(self, operator: BinaryConnective, formulae: Iterable[LogicExpression]):
+        assert operator.is_associative()
+        self.operator = operator
+        self.formulae = formulae
+
+    def __str__(self):
+        return "(" + f" {repr(self.operator)} ".join([str(f) for f in self.formulae]) + ")"
+
+    def symbols(self):
+        return chain(*[f.symbols() for f in self.formulae])
+
+    def is_valid(self):
+        return (isinstance(self.operator, BinaryConnective)
+                and self.operator.is_associative()
+                and all(f.is_logical_expression() for f in self.formulae))
+
+
+class FunctorExpression(TermExpression):
     __visit_name__ = "functor_expression"
 
     def __init__(self, functor, arguments: Iterable[TermExpression]):
@@ -476,7 +492,6 @@ class FunctorExpression(TermExpression):
 
 
 class PredicateExpression(LogicExpression):
-
     __visit_name__ = "predicate_expression"
 
     def __init__(self, predicate, arguments: Sequence[TermExpression]):
@@ -504,7 +519,6 @@ class PredicateExpression(LogicExpression):
 
 
 class Let(LogicElement):
-
     __visit_name__ = "let"
 
     def __init__(self, types, definitions, formula):
@@ -517,7 +531,6 @@ class Let(LogicElement):
 
 
 class Subtype(LogicElement):
-
     __visit_name__ = "subtype"
 
     def __init__(self, left, right):
@@ -533,7 +546,6 @@ class Type(LogicElement):
 
 
 class QuantifiedType(LogicElement):
-
     __visit_name__ = "quantified_type"
 
     def __init__(self, variables, vtype):
@@ -542,7 +554,6 @@ class QuantifiedType(LogicElement):
 
 
 class MappingType(LogicElement):
-
     __visit_name__ = "mapping_type"
 
     def __init__(self, left, right):
