@@ -1,7 +1,7 @@
 from abc import ABC
 from enum import Enum
 from itertools import chain
-from typing import Iterable
+from typing import Iterable, Sequence
 import re
 
 
@@ -80,6 +80,20 @@ class BinaryConnective(Enum):
             BinaryConnective.DISJUNCTION,
             BinaryConnective.CONJUNCTION,
             BinaryConnective.EQ,
+        )
+
+    def is_symmetric(self):
+        return self in (
+            BinaryConnective.CONJUNCTION,
+            BinaryConnective.DISJUNCTION,
+            BinaryConnective.BIIMPLICATION,
+            BinaryConnective.SIMILARITY,
+            BinaryConnective.NEGATED_CONJUNCTION,
+            BinaryConnective.NEGATED_DISJUNCTION,
+            BinaryConnective.NEQ,
+            BinaryConnective.EQ,
+            BinaryConnective.PRODUCT,
+            BinaryConnective.UNION
         )
 
     def __repr__(self):
@@ -229,6 +243,12 @@ class Variable(TermExpression):
     def is_valid(self):
         return re.match("[A-Z]\w*", self.symbol)
 
+    def __eq__(self, other):
+        return self.symbol == other.symbol
+
+    def __hash__(self):
+        return hash(self.symbol)
+
 
 class Constant(TermExpression):
 
@@ -245,6 +265,9 @@ class Constant(TermExpression):
 
     def is_valid(self):
         _matches_functor(self.symbol)
+
+    def __hash__(self):
+        return hash(self.symbol)
 
 
 class DistinctObject(TermExpression):
@@ -313,6 +336,9 @@ class UnaryFormula(LogicExpression):
     def __str__(self):
         return "%s(%s)" % (repr(self.connective), self.formula)
 
+    def __eq__(self, other):
+        return type(self) is type(other) and self.connective == other.connective and self.formula == other.formula
+
     def symbols(self):
         return self.formula.symbols()
 
@@ -330,7 +356,7 @@ class QuantifiedFormula(LogicExpression):
     ----------
 
     quantifier:
-        A quantier (existential or universal)
+        A quantifier (existential or universal)
     variables:
         A list of variables bound by the quantifier
     formula
@@ -352,6 +378,13 @@ class QuantifiedFormula(LogicExpression):
             ", ".join(map(str, self.variables)),
             self.formula,
         )
+
+    def __eq__(self, other):
+        if not (type(self) is type(other) and self.quantifier == other.quantifier):
+            return False
+        if not (all(v in other.variables for v in self.variables) and all(v in self.variables for v in other.variables)):
+            return False
+        return self.formula == other.formula
 
     def symbols(self):
         variables = {
@@ -386,13 +419,22 @@ class BinaryFormula(LogicExpression):
 
     requires_parens = True
 
-    def __init__(self, left: LogicExpression, operator, right: LogicExpression):
+    def __init__(self, left: LogicExpression, operator: BinaryConnective, right: LogicExpression):
         self.left = left
         self.right = right
         self.operator = operator
 
     def __str__(self):
         return "(%s) %s (%s)" % (str(self.left), repr(self.operator), str(self.right))
+
+    def __eq__(self, other):
+        if not (type(self) == type(other) and self.operator == other.operator):
+            return False
+        if not self.operator.is_symmetric():
+            return self.left == other.left and self.right == other.right
+        else:
+            return (self.left == other.left and self.right == other.right) or (self.left == other.right and self.right == other.left)
+
 
     def symbols(self):
         return chain(self.left.symbols(), self.right.symbols())
@@ -437,12 +479,17 @@ class PredicateExpression(LogicExpression):
 
     __visit_name__ = "predicate_expression"
 
-    def __init__(self, predicate, arguments: Iterable[TermExpression]):
+    def __init__(self, predicate, arguments: Sequence[TermExpression]):
         self.predicate = predicate
         self.arguments = arguments
 
     def __str__(self):
         return "%s(%s)" % (self.predicate, ", ".join(map(str, self.arguments)))
+
+    def __eq__(self, other):
+        return (type(self) is type(other) and self.predicate == other.predicate
+                and len(self.arguments) == len(other.arguments)
+                and all(arg1 == arg2 for arg1, arg2 in zip(self.arguments, other.arguments)))
 
     def symbols(self):
         yield self.predicate
