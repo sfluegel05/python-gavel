@@ -71,7 +71,8 @@ class TestFormulaUtils(unittest.TestCase):
             self.assertFalse(logic.Variable("X") in logic_utils.get_vars_in_formula(substituted))
             self.assertTrue("c1" in substituted.symbols())
             (self.assertTrue(logic.Variable("Y") in logic_utils.get_vars_in_formula(substituted),
-                             f"Found only variables {[str(var) for var in logic_utils.get_vars_in_formula(substituted)]}"
+                             f"Found only variables "
+                             f"{[str(var) for var in logic_utils.get_vars_in_formula(substituted)]}"
                              f" in formula {substituted}"))
 
     def test_operator_overloading(self):
@@ -88,7 +89,7 @@ class TestFormulaUtils(unittest.TestCase):
         formula_biimp = logic.UnaryFormula(
             logic.UnaryConnective.NEGATION,
             logic.BinaryFormula(
-                logic.PredicateExpression("wierdly_similar", [logic.Variable("x"), logic.Variable("y")]),
+                logic.PredicateExpression("weirdly_similar", [logic.Variable("x"), logic.Variable("y")]),
                 logic.BinaryConnective.BIIMPLICATION,
                 logic.UnaryFormula(
                     logic.UnaryConnective.NEGATION,
@@ -102,7 +103,7 @@ class TestFormulaUtils(unittest.TestCase):
                 logic.Quantifier.UNIVERSAL,
                 [logic.Variable("x"), logic.Variable("y")],
                 logic.BinaryFormula(
-                    logic.PredicateExpression("wierdly_similar", [logic.Variable("x"), logic.Variable("y")]),
+                    logic.PredicateExpression("weirdly_similar", [logic.Variable("x"), logic.Variable("y")]),
                     logic.BinaryConnective.BIIMPLICATION,
                     logic.BinaryFormula(
                         logic.UnaryFormula(
@@ -111,14 +112,14 @@ class TestFormulaUtils(unittest.TestCase):
                         logic.BinaryConnective.CONJUNCTION,
                         logic.BinaryFormula(
                             logic.BinaryFormula(
-                                logic.PredicateExpression("wierd", [logic.Variable("x")]),
+                                logic.PredicateExpression("weird", [logic.Variable("x")]),
                                 logic.BinaryConnective.DISJUNCTION,
                                 logic.UnaryFormula(
                                     logic.UnaryConnective.NEGATION,
                                     logic.PredicateExpression("normal", [logic.Variable("x")]))
                             ),
                             logic.BinaryConnective.IMPLICATION,
-                            logic.PredicateExpression("wierd", [logic.Variable("y")]),
+                            logic.PredicateExpression("weird", [logic.Variable("y")]),
                         )
                     )
                 )
@@ -134,20 +135,20 @@ class TestFormulaUtils(unittest.TestCase):
 
     def testCNF(self):
         formula = logic.BinaryFormula(
-            logic.PredicateExpression("wierdly_similar", [logic.Variable("x"), logic.Variable("y")]),
+            logic.PredicateExpression("weirdly_similar", [logic.Variable("x"), logic.Variable("y")]),
             logic.BinaryConnective.DISJUNCTION,
             logic.NaryFormula(logic.BinaryConnective.CONJUNCTION, [
                 logic.UnaryFormula(logic.UnaryConnective.NEGATION,
                                    logic.BinaryFormula(logic.Variable("x"), logic.BinaryConnective.EQ,
                                                        logic.Variable("y"))),
                 logic.BinaryFormula(
-                    logic.PredicateExpression("wierd", [logic.Variable("x")]),
+                    logic.PredicateExpression("weird", [logic.Variable("x")]),
                     logic.BinaryConnective.DISJUNCTION,
                     logic.UnaryFormula(
                         logic.UnaryConnective.NEGATION,
                         logic.PredicateExpression("normal", [logic.Variable("x")]))
                 ),
-                logic.PredicateExpression("wierd", [logic.Variable("y")]),
+                logic.PredicateExpression("weird", [logic.Variable("y")]),
             ])
         )
         print("Formula:", formula)

@@ -1,6 +1,7 @@
 import unittest
 from gavel.logic import logic
 
+
 class TestEquality(unittest.TestCase):
     """Syntactic equality (with symmetry) between gavel formulas"""
 

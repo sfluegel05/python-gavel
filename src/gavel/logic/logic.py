@@ -415,7 +415,8 @@ class BinaryFormula(LogicExpression):
 
     requires_parens = True
 
-    def __init__(self, left: LogicExpression, operator: BinaryConnective, right: LogicExpression):
+    def __init__(self, left: LogicExpression | TermExpression, operator: BinaryConnective,
+                 right: LogicExpression | TermExpression):
         self.left = left
         self.right = right
         self.operator = operator
@@ -430,7 +431,7 @@ class BinaryFormula(LogicExpression):
             return self.left == other.left and self.right == other.right
         else:
             return (self.left == other.left and self.right == other.right) or (
-                        self.left == other.right and self.right == other.left)
+                    self.left == other.right and self.right == other.left)
 
     def symbols(self):
         return chain(self.left.symbols(), self.right.symbols())
