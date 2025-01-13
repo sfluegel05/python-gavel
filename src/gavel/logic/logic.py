@@ -503,7 +503,8 @@ class PredicateExpression(LogicExpression):
         return "%s(%s)" % (self.predicate, ", ".join(map(str, self.arguments)))
 
     def __eq__(self, other):
-        return (type(self) is type(other) and self.predicate == other.predicate
+        return (isinstance(other, PredicateExpression)
+                and self.predicate == other.predicate
                 and len(self.arguments) == len(other.arguments)
                 and all(arg1 == arg2 for arg1, arg2 in zip(self.arguments, other.arguments)))
 
