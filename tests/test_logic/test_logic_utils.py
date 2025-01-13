@@ -17,6 +17,7 @@ class TestFormulaUtils(unittest.TestCase):
         self.assertTrue(logic.Variable("z") in variables)
 
     def test_flatten_formula(self):
+        # ((abc & def) & ((ghi & (abc & def) & (ghi | jkl))))
         formula = logic.BinaryFormula(
             logic.BinaryFormula(
                 logic.PredicateExpression("abc", [logic.Variable("x")]),
@@ -39,16 +40,15 @@ class TestFormulaUtils(unittest.TestCase):
                 ])
             ])
         )
-        flattened = logic_utils.binary_to_nary(formula, logic.BinaryConnective.CONJUNCTION)
         # result should be a n-ary formula
-        self.assertTrue(isinstance(flattened, logic.NaryFormula))
+        self.assertTrue(isinstance(logic_utils.binary_to_nary(formula, logic.BinaryConnective.CONJUNCTION), logic.NaryFormula))
         # formula should not have conjunctions in layer below
         self.assertFalse(any(isinstance(f, logic.BinaryFormula)
                              or (isinstance(f, logic.NaryFormula) and f.operator == logic.BinaryConnective.CONJUNCTION)
-                             for f in flattened.formulae))
+                             for f in logic_utils.binary_to_nary(formula, logic.BinaryConnective.CONJUNCTION).formulae))
         # don't flatten disjunction
         self.assertTrue(any(isinstance(f, logic.NaryFormula) and f.operator == logic.BinaryConnective.DISJUNCTION
-                        for f in flattened.formulae))
+                        for f in logic_utils.binary_to_nary(formula, logic.BinaryConnective.CONJUNCTION).formulae))
 
     def test_substitute_var_in_formula(self):
         for formula in [logic.PredicateExpression("abc", [logic.Variable("X"), logic.Variable("Y")]),
